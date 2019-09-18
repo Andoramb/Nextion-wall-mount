@@ -9,19 +9,19 @@ The purpose is to have a remote controller, that's mounted on the wall and gives
 Basically everything is connected to Home Assistant through Esphome:
 
 1. Overview - General info:
-    - Indoor / Outdoor temperature / Rain Forecast + Weather Symbol
-    - Display Date and Time
-    - My Facebook Birthay Calendar / Facebook Events / Google Calendar
-    - Byebye - Automation (music and lights off, etc)
-    - Play/Pause Media player - Kodi in my case
+   - Indoor / Outdoor temperature / Rain Forecast + Weather Symbol
+   - Display Date and Time
+   - My Facebook Birthay Calendar / Facebook Events / Google Calendar
+   - Byebye - Automation (music and lights off, etc)
+   - Play/Pause Media player - Kodi in my case
     
 2. Lights- The important ones:
-    - Kitchen, Livingoom and Bedroom Lights
+   - Kitchen, Livingoom and Bedroom Lights
         
 3. Media - Radio and quick controls:
-    - 6 stations
-    - Vol +/-
-    - Play/Pause button   
+   - 6 stations
+   - Vol +/-
+   - Play/Pause button   
     
 4. Vacuum Cleaner - Map:
     - Apartment layout with zones
@@ -35,7 +35,10 @@ Basically everything is connected to Home Assistant through Esphome:
     - Secret menu - but of course
       - Change display brightness
       - Reboot the display
-      
+# Other features:
+  - Screen turns off after 1h standby time
+  - Screen brightness is set based on *sun elevation*
+    
       
 ## HW used:
 1. Home Assistant
@@ -46,6 +49,18 @@ Basically everything is connected to Home Assistant through Esphome:
 5. 3D printed case for the wall mount
 
 
+## Resources and SW:
+You can find the used resources in the repo.
+Basically none the SW and HW is actually *my* work:
+- Icons were exported from [Material Design Icons](https://materialdesignicons.com) - Thanks!
+- The weather pictures were taken from [Yr Weather Symbols repo](https://github.com/YR/weather-symbols) - Thanks!
+- For [Esphome](https://esphome.io): The basic descriptions from the site is **really** helpful.
+  - A lot of code from various github repos served as a base, tailored to my setup.
+
+## Something very important:
+**This display board is _not Nextion_**!
+
+This is actually TJC. And the HMI file will not open in Nextion Editor -> only USART HMI editor. I'm not sure if the project can be ported either way, but essentially the 2 editors are the same (chinese vs english...)
 
 
 I barely started this project, just for fun. As I'm no programmer, I still need to work on the coding, but the community comes in handy!
