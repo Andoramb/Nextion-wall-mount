@@ -47,6 +47,8 @@ Basically everything is connected to Home Assistant through Esphome:
 2. Wemos D1 mini - with Esphome
 3. Nextion Display - NX4832T035_011
     - Mine is actually TJC4832T035_011 but both are the same(?) HW
+    - 3.5inch with a resolution of 480x320
+    - Resistive touch
 4. A passive buzzer, that gives audio feedback on touch
 5. 3D printed case for the wall mount
 
