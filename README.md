@@ -5,30 +5,32 @@ Hi there!
 In this project I tried to create a simple(?) wall mount with quick and easy access to Home Assistant.
 The purpose is to have a remote controller, that's mounted on the wall and gives a quick info of the day ... or basically whatever you need from Home Assistant.
 
+Demo video [HERE](https://www.youtube.com/watch?v=TL8wZNnS4jI)
+
 ## Features:
 Basically everything is connected to Home Assistant through Esphome:
 
-1. Overview - General info:
+**1. Overview - General info:**
    - Indoor / Outdoor temperature / Rain Forecast + Weather Symbol
    - Display Date and Time
    - My Facebook Birthay Calendar / Facebook Events / Google Calendar
    - Byebye - Automation (music and lights off, etc)
    - Play/Pause Media player - Kodi in my case
     
-2. Lights- The important ones:
-   - Kitchen, Livingoom and Bedroom Lights
+**2. Lights- The important ones:**
+   - Kitchen, Livingoom and Bedroom Lights toggle (Slider not implemented yet)
         
-3. Media - Radio and quick controls:
+**3. Media - Radio and quick controls:**
    - 6 stations
    - Vol +/-
    - Play/Pause button   
     
-4. Vacuum Cleaner - Map:
+**4. Vacuum Cleaner - Map:**
     - Apartment layout with zones
     - Vacuum Controls: play/pause, "TrashSpot", Go home, Set speed
     - Stream music on the vacuum
         
-5. Automations - Switches:
+**5. Automations - Switches:**
     - Kitchen plug - for the coffee maker
     - Morning routine automation (lights on, music on at for ex. 6:45)
     - Wifi status
