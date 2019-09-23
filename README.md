@@ -37,9 +37,13 @@ Basically everything is connected to Home Assistant through Esphome:
     - Secret menu - but of course
       - Change display brightness
       - Reboot the display
+      
+**6. Screensaver**     
+      
 # Other features:
   - Screen turns off after 1h standby time
-  - Screen brightness is set based on *sun elevation*
+  - Screen brightness is set based on *sun elevation* and devices connected to Wifi (*group.all_devices*)
+  - Auto refresh every page and relevant variables initialize with correct state data (ex. if the lights are on, switch will turn to on)
     
       
 ## HW used:
