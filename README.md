@@ -26,17 +26,17 @@ Basically everything is connected to Home Assistant through Esphome:
    - Play/Pause button   
     
 **4. Vacuum Cleaner - Map:**
-    - Apartment layout with zones
-    - Vacuum Controls: play/pause, "TrashSpot", Go home, Set speed
-    - Stream music on the vacuum
+   - Apartment layout with zones
+   - Vacuum Controls: play/pause, "TrashSpot", Go home, Set speed
+   - Stream music on the vacuum
         
 **5. Automations - Switches:**
-    - Kitchen plug - for the coffee maker
-    - Morning routine automation (lights on, music on at for ex. 6:45)
-    - Wifi status
-    - Secret menu - but of course
-      - Change display brightness
-      - Reboot the display
+   - Kitchen plug - for the coffee maker
+   - Morning routine automation (lights on, music on at for ex. 6:45)
+   - Wifi status
+   - Secret menu - but of course
+     - Change display brightness
+     - Reboot the display
       
 **6. Screensaver**     
       
