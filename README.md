@@ -5,6 +5,8 @@ Hi there!
 In this project I tried to create a simple(?) wall mount with quick and easy access to Home Assistant.
 The purpose is to have a remote controller, that's mounted on the wall and gives a quick info of the day ... or basically whatever you need from Home Assistant.
 
+![](https://github.com/Andoramb/Nextion-wall-mount/blob/master/Images/preview-small.jpg)
+
 Demo video [HERE](https://www.youtube.com/watch?v=TL8wZNnS4jI)
 
 ## Features:
@@ -75,4 +77,7 @@ This is actually TJC. And the HMI file will not open in Nextion Editor -> only U
 
 I barely started this project, just for fun. As I'm no programmer, I still need to work on the coding, but the community comes in handy!
 
-Until that, you can find some STL-s for the wall mount.
+## Additional Images of the layout
+![](https://github.com/Andoramb/Nextion-wall-mount/blob/master/Images/1.jpg)
+
+![](https://github.com/Andoramb/Nextion-wall-mount/blob/master/Images/4.jpg)
