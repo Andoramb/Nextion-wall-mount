@@ -2,29 +2,30 @@ esphome:
   name: nextiondisplay
   platform: ESP8266
   board: d1_mini
-
+  on_boot:
+    priority: -180
+    then:
+      - lambda: |-
+          id(page1).publish_state(true);
+          id(page2).publish_state(false);
+          id(page3).publish_state(false);
+          id(page4).publish_state(false);
+          id(page5).publish_state(false);
+          id(page6).publish_state(false);
+          
 wifi:
   ssid: !secret ssid
   password: !secret password
   fast_connect: true
   
 logger:
+  
 api:
 ota:
-
-# Automation handling the display brightness based on sunset/sunrise (not only init)
 
 sun:
   latitude: !secret latitude
   longitude: !secret longitude
-  on_sunset:   
-    - elevation: -5
-      then:
-        - lambda: 'id(glob_sunelevation) = "40";'
-  on_sunrise:
-    - elevation: -1
-      then:
-        - lambda: 'id(glob_sunelevation) = "90";'
 
 time:
   - platform: sntp
@@ -34,113 +35,52 @@ time:
 globals:
   - id: glob_morning_active             # Morning Routine start time
     type: std::string
-
-  - id: glob_wifistat                   # Wifi status written to the display
-    type: std::string
+    initial_value: ' '
 
   - id: glob_today_icon                 # Today's weather icon number, that is requested on the display
     type: int
-
-  - id: glob_sunelevation               # Display Brightness depending on sun elevation
-    type: std::string
-
-  - id: glob_raintext                   # Display if it's gonna rain in 8h
-    type: std::string
-
-  - id: glob_kitchenlight               # Global Kitchen light state
-    type: std::string
-
-  - id: glob_livinglight                # Global Livingroom light state
-    type: std::string
- 
-  - id: glob_bedlight                   # Global Bedroom light state
-    type: std::string
-    
-  - id: glob_kodivolume                 # Global Kodi Volume
-    type: std::string
-    
+    initial_value: '25'
 
 # Uart port definition - This works OK, but also HW UART0 works if Logs are disabled or changed to UART1
 uart:
   rx_pin: D4   
   tx_pin: D3   
-  baud_rate: 9600
+  baud_rate: 9600 
 
 display:
   - platform: nextion
     id: nextiondisplay
-    update_interval: 60s  #on final version this needs to be set to 30-60s - valid for every page
+    update_interval: 60s
     lambda: |-
-    
-            it.send_command_printf("dim=%s", id(glob_sunelevation).c_str());
+            it.set_wait_for_ack(false);
             
-            
+            auto date = id(sntp_time).now().strftime("%b. %d");
+            auto time = id(sntp_time).now();
+
             if (id(page1).state) {
-                      it.set_component_text_printf("intemp","%f.0",id(temperature_inside).state);
-                      it.set_component_text_printf("outtemp","%f.0",id(temperature_outside).state);
-                      it.send_command_printf("%s.pic=%i", "weather",id(glob_today_icon));
-                      it.set_component_text_printf("fb","%s",id(today_facebook).state.c_str());
-                      it.set_component_text_printf("fbevent","%s",id(today_facebookevents).state.c_str());
-                      it.set_component_text_printf("google","%s",id(today_google).state.c_str());
-                      auto time = id(sntp_time).now();
-                      it.set_component_text_printf("time","%02d:%02d",time.hour,time.minute);
-                      it.set_component_text_printf("date","%02d.%02d",time.month,time.day_of_month);
-                      it.set_component_text_printf("rain","%s",id(glob_raintext).c_str());
+                      it.set_component_text_printf("Overview.intemp","%2f",id(temperature_inside).state);
+                      it.set_component_text_printf("Overview.outtemp","%3f",id(temperature_outside).state);
+                      it.send_command_printf("%s.pic=%i", "Overview.weather",id(glob_today_icon));
+                      it.set_component_text_printf("Overview.fb","%s",id(today_facebook).state.c_str());
+                      it.set_component_text_printf("Overview.fbevent","%s",id(today_facebookevents).state.c_str());
+                      it.set_component_text_printf("Overview.google","%s",id(today_google).state.c_str());
+                      it.set_component_text_printf("Overview.time","%02d:%02d",time.hour,time.minute);
+                      it.set_component_text("Overview.date", date.c_str());
             }
             if (id(page2).state) {
-                      it.send_command_printf("bt0.val=%s", id(glob_kitchenlight).c_str());
-                      it.send_command_printf("bt1.val=%s", id(glob_livinglight).c_str());
-                      it.send_command_printf("bt2.val=%s", id(glob_bedlight).c_str());
-            
-            
+                   it.send_command_printf("Lights.bt0.val=%d",id(table_lights).state);
+                   it.send_command_printf("Lights.bt1.val=%d",id(livingroom_lights).state);
+                   it.send_command_printf("Lights.bt2.val=%d",id(bedroom_lights).state);
             }
             if (id(page3).state) {
-                it.set_component_text_printf("vol","%s",id(glob_kodivolume).c_str());
-            
-            }
-            if (id(page4).state) {
-            
-            
-            }
+                   it.set_component_text_printf("Media.vol","%2.1f%%",id(kodi_volume).state);
+                   it.send_command_printf("Media.volslider.val=%.0f",id(kodi_volume).state);
+                   it.set_component_text("Media.koditext",id(kodi_text).state.c_str());
+            }  
             if (id(page5).state) {
-                      it.set_component_text_printf("ontime","%s",id(glob_morning_active).c_str());
-                      it.set_component_text_printf("wifistat","%s",id(glob_wifistat).c_str());
-            
+                it.set_component_text_printf("Automations.ontime","%s",id(glob_morning_active).c_str());
+                it.set_component_text_printf("screensaver.time","%02d:%02d",time.hour,time.minute);
             }
-            if (id(page6).state) {
-
-            
-            }
-            if (id(page7).state) {
-                      auto time = id(sntp_time).now();
-                      it.set_component_text_printf("time","%02d:%02d",time.hour,time.minute);
-               
-            }
-
-
-    
-# This part is handling the passive buzzer beep on touch - From here
-    
-script:
-  - id: beepscript
-    then:
-      - switch.turn_on: TouchBuzzer
-      - delay: 0.05s
-      - switch.turn_off: TouchBuzzer
-
-switch:
-  - platform: output
-    id: TouchBuzzer
-    name: "TouchBuzzer"
-    output: 'buzzer'
-
-output:
-  - platform: esp8266_pwm
-    pin: D2
-    id: 'buzzer'
-    frequency: 500
-
-# This part is handling the passive buzzer beep on touch - 'Til here
 
 
 ## --------------------  TEXT SENSORS from HA  --------------------
@@ -161,138 +101,117 @@ text_sensor:
     entity_id: sensor.google
     
   - platform: homeassistant
-    id: morning_on_time
-    entity_id: input_datetime.livingroom_time_on
+    id: command
+    entity_id: input_text.nextioncom3  
+    on_value:
+       then:
+         - lambda: 'id(nextiondisplay).send_command_printf("%s",id(command).state.c_str());'
     
-  - platform: homeassistant   # Kitchen Light state
-    id: table_lightstext
-    entity_id: light.table_light
+  - platform: homeassistant
+    id: morning_on_time
+    entity_id: input_datetime.brigi_time_on
+    
+  - platform: homeassistant
+    id: sonoff_timer
+    entity_id: sensor.sonoff1_timer
     on_value:
        then:
-         - if:
-            condition:
-              lambda: 'return (id(table_lightstext).state == "on");'
-            then:
-              - lambda: |-
-                          id(glob_kitchenlight) = "1";
-                          id(nextiondisplay).send_command_no_ack("bt0.val=1");
-            else:
-              - lambda: |-
-                          id(glob_kitchenlight) = "0";
-                          id(nextiondisplay).send_command_no_ack("bt0.val=0");
-      
-  - platform: homeassistant   # Livingroom Light state
-    id: livingroom_lightstext
-    entity_id: light.living_room_lights
-    on_value:
-       then:
-         - if:
-            condition:
-              lambda: 'return (id(livingroom_lightstext).state == "on");'
-            then:
-              - lambda: |-
-                          id(glob_livinglight) = "1";
-                          id(nextiondisplay).send_command_no_ack("bt1.val=1");
-            else:
-              - lambda: |-
-                          id(glob_livinglight) = "0";
-                          id(nextiondisplay).send_command_no_ack("bt1.val=0");
-      
-  - platform: homeassistant   # Kitchen Light state
-    id: bedroom_lightstext
-    entity_id: light.bedroom_lights
-    on_value:
-       then:
-         - if:
-            condition:
-              lambda: 'return (id(bedroom_lightstext).state == "on");'
-            then:
-              - lambda: |-
-                          id(glob_bedlight) = "1";
-                          id(nextiondisplay).send_command_no_ack("bt2.val=1");
-            else:
-              - lambda: |-
-                          id(glob_bedlight) = "0";
-                          id(nextiondisplay).send_command_no_ack("bt2.val=0");
-                          
-  - platform: homeassistant   # Kodi volume
-    id: kodi_volume
-    entity_id: sensor.kodi_volume
-    on_value:
-       then:
-         - lambda: 'id(glob_kodivolume) = id(kodi_volume).state.c_str();'
-         - component.update: nextiondisplay
-         
+         - lambda: 'id(nextiondisplay).set_component_text_printf("Automations.timer","%s",id(sonoff_timer).state.c_str());'
+    
+    
   - platform: homeassistant   # Home Assistant sensor controlling display sleep in case nobody is home
-    id: somebody_home
-    entity_id: group.all_devices
+    id: statemode
+    entity_id: input_select.state_mode
     on_value:
        then:
          - if:
             condition:
-              lambda: 'return (id(somebody_home).state == "not_home");'
+              lambda: 'return (id(statemode).state == "Away" || "Movie" || "Vacation"|| "Sleep" );'
             then:
               - lambda: 'id(nextiondisplay).send_command_no_ack("sleep=1");'
             else:
               - lambda: 'id(nextiondisplay).send_command_no_ack("sleep=0");'
 
-  - platform: homeassistant   # Home Assistant sensor controlling display sleep in case nobody is home
-    id: raw_command
-    entity_id: input_text.nextioncommand
+  - platform: template
+    id: esp_ip
+    lambda: 'return {WiFi.localIP().toString().c_str()};'
+    on_value:
+      then:
+        - lambda: 'id(nextiondisplay).set_component_text_printf("Automations.wifistat","%s",id(esp_ip).state.c_str());'
+    
+    
+  - platform: homeassistant   # Kodi Now Playing Text
+    id: kodi_text
+    entity_id: sensor.kodi_text
+    on_value:
+       then:
+         - lambda: 'id(nextiondisplay).set_component_text("Media.koditext",id(kodi_text).state.c_str());'
 
+  - platform: template
+    name: "Uptime3.5"
+    id: uptime_formatted
+    lambda: |-
+      uint32_t dur = id(uptime_s).state;
+      int dys = 0;
+      int hrs = 0;
+      int mnts = 0;
+      if (dur > 86399) {
+        dys = trunc(dur / 86400);
+        dur = dur - (dys * 86400);
+      }
+      if (dur > 3599) {
+        hrs = trunc(dur / 3600);
+        dur = dur - (hrs * 3600);
+      }
+      if (dur > 59) {
+        mnts = trunc(dur / 60);
+        dur = dur - (mnts * 60);
+      }
+      char buffer[17];
+      sprintf(buffer, "%ud %02uh %02um %02us", dys, hrs, mnts, dur);
+      return {buffer};
+    icon: mdi:clock-start
+    update_interval: 60s
+    
 
 ## --------------------  SENSORS from HA  --------------------
 #  usually numeric states can go here
 
 sensor:
-  - platform: homeassistant   # Buzzer Frequency imported from HA for the Buzzer component
-    id: frequency
-    entity_id: input_number.frequency
-    on_value:
-      then:
-        - output.set_level:
-            id: buzzer
-            level: !lambda 'return id(frequency).state;'
-        - output.esp8266_pwm.set_frequency:
-            id: buzzer
-            frequency: !lambda 'return id(frequency).state;'
-        - script.execute: beepscript   
-        
-        
+
   - platform: homeassistant   # Inside temperature
     id: temperature_inside
     entity_id: sensor.living_room_temperature
     accuracy_decimals: 0
     on_value:
        then:
-         - component.update: nextiondisplay
+          - lambda: 'id(nextiondisplay).set_component_text_printf("Overview.intemp","%2f",id(temperature_inside).state);'
 
   - platform: homeassistant   # Outside temperature
     id: temperature_outside
-    entity_id: sensor.weather_temperature
+    entity_id: sensor.dark_sky_temperature_0h
     accuracy_decimals: 0
     on_value:
        then:
-         - component.update: nextiondisplay
+          - lambda: 'id(nextiondisplay).set_component_text_printf("Overview.outtemp","%2f",id(temperature_outside).state);'
 
   - platform: homeassistant   # Forecast precipitation
-    entity_id: sensor.weather_precipitation
+    entity_id: sensor.dark_sky_precip_probability_8h
     id: today_rain
     on_value:
        then:
          - if:
             condition:
-              lambda: 'return (id(today_rain).state > 0);'
+              lambda: 'return (id(today_rain).state > 40);'
             then:
-              lambda: 'id(glob_raintext)="Rain";'
+              lambda: 'id(nextiondisplay).set_component_text("Overview.rain","Rain");'
             else:
-              lambda: 'id(glob_raintext)="No rain";'
-         - component.update: nextiondisplay
+              lambda: 'id(nextiondisplay).set_component_text("Overview.rain","No rain");'
 
   - platform: homeassistant   # Forecast icon
     id: weather_symbol
     entity_id: sensor.weather_symbol
-    on_value:
+    on_value:                 # This needs to be fixed for weather icon/text
        then:                  # The numbers here may change on different picture import order in Nextion or USART HMI
          - if:
             condition:
@@ -309,39 +228,97 @@ sensor:
               lambda: 'return (id(weather_symbol).state >= 40);'
             then:
               lambda: 'id(glob_today_icon) = id(weather_symbol).state + 15;'
-         - component.update: nextiondisplay
+         - lambda: 'id(nextiondisplay).send_command_printf("%s.pic=%i", "Overview.weather",id(glob_today_icon));'
 
-
-
+                          
+  - platform: homeassistant   # Kodi volume
+    id: kodi_volume
+    entity_id: sensor.kodi_volume
+    on_value:
+       then:
+         - lambda: |-
+                    id(nextiondisplay).set_component_text_printf("Media.vol","%2.1f%%",id(kodi_volume).state);
+                    id(nextiondisplay).send_command_printf("Media.volslider.val=%.0f",id(kodi_volume).state);
+              
+  - platform: uptime
+    id: uptime_s
+    update_interval: 60s
+  
 ## --------------------  BINARY SENSORS  --------------------
 #  binary sensors here are both from Nextion and HA. ESPHOME currently can read only binary sensors from Nextion
 
 binary_sensor:
 
   - platform: status
-    name: "Nextion Display Status"
+    name: "Nextion 3.5 Display"
     id: displaystatus
     on_state:       # based on wifi connection, we set the global variable here. This way it will be stored and valid upon refresh
       - if:
           condition:
-            wifi.connected:
+            api.connected:
           then:
-            - lambda: 'id(glob_wifistat) = "Wifi is Connected";'
+            - lambda: 'id(nextiondisplay).set_component_text_printf("Automations.wifistat","%s",id(esp_ip).state.c_str());'
           else:
-            - lambda: 'id(glob_wifistat) = "Wifi not Connected";'
-      - if:
-          condition:
-            sun.is_above_horizon:
-          then:
-            - lambda: 'id(glob_sunelevation) = "90";'
-          else:
-            - lambda: 'id(glob_sunelevation) = "40";'       
-            
-            
-            
-            
+            - lambda: 'id(nextiondisplay).set_component_text("Automations.wifistat","Wifi not Connected");'
+ 
+ 
+  # Status Screen - Motion Control
+  - platform: homeassistant
+    id: statusscreenmotion
+    entity_id: input_boolean.nextion_motion
+       
+#  Importing 2 motion sensors from HA. If these are triggered, then the display will wake up
+    
+  - platform: homeassistant
+    id: livingroom_pir_sensor
+    entity_id: binary_sensor.pir_sensor            
+    on_press:
+      then:
+        - script.execute: motionscript
+        
+  - platform: homeassistant
+    id: dafang_pir_sensor
+    entity_id: binary_sensor.dafang_motion_sensor            
+    on_press:
+      then:
+        - script.execute: motionscript
+        
+  - platform: homeassistant
+    id: kitchen_pir_sensor
+    entity_id: binary_sensor.kitchen_pir_sensor            
+    on_press:
+      then:
+        - script.execute: motionscript
 
-
+  - platform: homeassistant   # Kitchen Light state
+    id: table_lights
+    entity_id: light.table_light
+    on_state:
+       then:
+         - lambda: 'id(nextiondisplay).send_command_printf("Lights.bt0.val=%d",id(table_lights).state);'  
+      
+  - platform: homeassistant   # Livingroom Light state
+    id: livingroom_lights
+    entity_id: light.living_room_lights
+    on_state:
+       then:
+         - lambda: 'id(nextiondisplay).send_command_printf("Lights.bt1.val=%d",id(livingroom_lights).state);'     
+         
+  - platform: homeassistant   # Bedroom Light state
+    id: bedroom_lights
+    entity_id: light.bedroom_lights
+    on_state:
+       then:
+         - lambda: 'id(nextiondisplay).send_command_printf("Lights.bt2.val=%d",id(bedroom_lights).state);'        
+         
+  - platform: homeassistant   # Bedroom Light state
+    id: morningauto
+    entity_id: automation.morning_on_brigi
+    on_state:
+       then:
+         - lambda: 'id(nextiondisplay).send_command_printf("Automations.bt0.val=%d",id(morningauto).state);'        
+         
+  
 
 # Because currently it is not possible to read (sensor) values from Nextion, page navigation is done with binary sensors
 
@@ -353,7 +330,8 @@ binary_sensor:
     on_press:
       then:
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        - script.execute: autobrightness
+        
 
   # 2. page - Lights
   - platform: nextion
@@ -363,7 +341,7 @@ binary_sensor:
     on_press:
       then:
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
   # 3. page - Media
   - platform: nextion
@@ -373,17 +351,16 @@ binary_sensor:
     on_press:
       then:
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
-  # 4. page - Vacuum Cleaner
+  # 4. page - Vacuum Cleaner  #Nothing to update here
   - platform: nextion
     page_id: 3
     component_id: 5
     id: page4
     on_press:
       then:
-        - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
   # 5. page - Automations and settings
   - platform: nextion
@@ -393,7 +370,7 @@ binary_sensor:
     on_press:
       then:
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
   # 6. page - Developer settings
   - platform: nextion
@@ -403,18 +380,7 @@ binary_sensor:
     on_press:
       then:
         - component.update: nextiondisplay
-        - script.execute: beepscript
-
-  # . page - Screensaver
-  - platform: nextion
-    page_id: 6
-    component_id: 1
-    id: page7
-    on_press:
-      then:
-        - component.update: nextiondisplay
-        - script.execute: beepscript
-
+        
 
 
 ## ----------------------------------------------------------------------------------------------------
@@ -432,15 +398,7 @@ binary_sensor:
     on_press:
       then:
         - homeassistant.service:
-            service: light.turn_on
-            data:
-              entity_id: 
-                group.livingroom_lights
-                light.windowlights
-                light.wall_lights
-        - homeassistant.service:
-            service: script.1555864273339   # Move camera to OFF position
-        - script.execute: beepscript  
+            service: script.1551823637711   # Welcome Home Script
 
 # ByeBye Button
   - platform: nextion
@@ -450,16 +408,12 @@ binary_sensor:
     on_press:
       then:
         - homeassistant.service:
-            service: light.turn_off
-            data:
-              entity_id: group.all_lights
-        - homeassistant.service:
-            service: switch.turn_off
-            data:
-              entity_id: group.all_switches.
+            service: script.1551823637712  # Away Mode - Turn Lights, Media OFF
+        - logger.log: "Turn everything off script here"
         - homeassistant.service:
             service: script.1567332436215  # Move camera to ON position
-        - script.execute: beepscript
+        - logger.log: "Camera to ON Position script here"
+        
 
   # Media play/pause button
   - platform: nextion
@@ -472,7 +426,7 @@ binary_sensor:
             service: media_player.media_play_pause
             data:
               entity_id: media_player.kodi
-        - script.execute: beepscript
+        
 
 #
 #PAGE 1 - Lights
@@ -488,37 +442,34 @@ binary_sensor:
             service: light.turn_on
             data:
               entity_id: light.table_light
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: light.turn_off
             data:
               entity_id: light.table_light
-        - script.execute: beepscript
+        
 
   # Livingroom Lights toggle
   - platform: nextion
     page_id: 1
     component_id: 10
     id: living
-    filters:
-      - delayed_on: 30ms
-      - delayed_off: 30ms
     on_press:
       then:
         - homeassistant.service:
             service: light.turn_on
             data:
               entity_id: light.living_room_lights
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: light.turn_off
             data:
               entity_id: light.living_room_lights
-        - script.execute: beepscript
+        
 
   # Bedroom Lights toggle
   - platform: nextion
@@ -531,19 +482,19 @@ binary_sensor:
             service: light.turn_on
             data:
               entity_id: light.bedroom_lights
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: light.turn_off
             data:
               entity_id: light.bedroom_lights
-        - script.execute: beepscript
+        
 
 #
 #PAGE 2 - Media
 #
-  # Radio Station 1 button
+  # Radio Station 1 button - RiseFM
   - platform: nextion
     page_id: 2
     component_id: 9
@@ -556,9 +507,9 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: http://risefm1.stereoplayer.hu:8080/risefm_hq
               media_content_type: music
-        - script.execute: beepscript
+        
 
-  # Radio Station 2 button
+  # Radio Station 2 button - Petofi Radio
   - platform: nextion
     page_id: 2
     component_id: 10
@@ -571,9 +522,9 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: http://mr-stream.mediaconnect.hu/4738/mr2.mp3
               media_content_type: music
-        - script.execute: beepscript
+        
 
-  # Radio Station 3 button
+  # Radio Station 3 button - Radio Most
   - platform: nextion
     page_id: 2
     component_id: 11
@@ -586,9 +537,9 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: http://stream.radiomost.hu:8200/live.mp3
               media_content_type: music
-        - script.execute: beepscript
+        
 
-  # Radio Station 4 button
+  # Radio Station 4 button - Radio Gaga
   - platform: nextion
     page_id: 2
     component_id: 12
@@ -601,9 +552,9 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: http://rc.radiogaga.ro:8000/live
               media_content_type: music
-        - script.execute: beepscript
+        
 
-  # Radio Station 5 button
+  # Radio Station 5 button - P3 Star
   - platform: nextion
     page_id: 2
     component_id: 13
@@ -616,13 +567,43 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: https://sverigesradio.se/topsy/direkt/tunein/1607-hi.mp3
               media_content_type: music
-        - script.execute: beepscript
+        
 
-  # Radio Station 6 button
+  # Radio Station 6 button - iLikeRadio/StarFM
+  - platform: nextion
+    page_id: 2
+    component_id: 19
+    id: radio6
+    on_press:
+      then:
+        - homeassistant.service:
+            service: media_player.play_media
+            data:
+              entity_id: media_player.kodi
+              media_content_id: http://fm05-ice.stream.khz.se/fm05_mp3
+              media_content_type: music
+        
+
+  # Radio Station 7 button - RixFM
+  - platform: nextion
+    page_id: 2
+    component_id: 20
+    id: radio7
+    on_press:
+      then:
+        - homeassistant.service:
+            service: media_player.play_media
+            data:
+              entity_id: media_player.kodi
+              media_content_id: http://fm01-ice.stream.khz.se/fm01_mp3
+              media_content_type: music
+        
+
+  # Radio Station 8 button - Latino 99FM
   - platform: nextion
     page_id: 2
     component_id: 14
-    id: radio6
+    id: radio8
     on_press:
       then:
         - homeassistant.service:
@@ -631,7 +612,7 @@ binary_sensor:
               entity_id: media_player.kodi
               media_content_id: http://96.31.83.86:8205/LATINO%2099%20FM
               media_content_type: music
-        - script.execute: beepscript
+        
 
   # Decrease Volume
   - platform: nextion
@@ -645,7 +626,7 @@ binary_sensor:
             data:
               entity_id: media_player.kodi
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
   # Increase Volume
   - platform: nextion
@@ -659,7 +640,7 @@ binary_sensor:
             data:
               entity_id: media_player.kodi
         - component.update: nextiondisplay
-        - script.execute: beepscript
+        
 
   # Media play/pause button
   - platform: nextion
@@ -672,7 +653,7 @@ binary_sensor:
             service: media_player.media_play_pause
             data:
               entity_id: media_player.kodi
-        - script.execute: beepscript
+        
 
   # Media Stop button
   - platform: nextion
@@ -685,7 +666,7 @@ binary_sensor:
             service: media_player.media_stop
             data:
               entity_id: media_player.kodi
-        - script.execute: beepscript
+        
 
 
 #
@@ -702,7 +683,7 @@ binary_sensor:
             service: input_number.decrement
             data:
               entity_id: input_number.consuelaspeed
-        - script.execute: beepscript
+        
 
   # Consuela Increase Fan Speed
   - platform: nextion
@@ -715,7 +696,7 @@ binary_sensor:
             service: input_number.increment
             data:
               entity_id: input_number.consuelaspeed
-        - script.execute: beepscript
+        
 
 
   # Consuela Kitchen Quick
@@ -729,7 +710,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1555171803610
-        - script.execute: beepscript
+        
 
   # Consuela Kitchen
   - platform: nextion
@@ -742,7 +723,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1555171803611
-        - script.execute: beepscript
+        
 
   # Consuela Livingroom
   - platform: nextion
@@ -755,7 +736,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1555171803612
-        - script.execute: beepscript
+        
 
   # Consuela Bedroom
   - platform: nextion
@@ -768,7 +749,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1555171803613
-        - script.execute: beepscript
+        
 
   # Consuela Entry
   - platform: nextion
@@ -781,7 +762,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1555171803609
-        - script.execute: beepscript
+        
 
   # Consuela Go Home
   - platform: nextion
@@ -794,7 +775,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1565813738674
-        - script.execute: beepscript
+        
 
   # Consuela Go To TrashSpot
   - platform: nextion
@@ -807,7 +788,7 @@ binary_sensor:
             service: script.turn_on
             data:
               entity_id: script.1565813738674
-        - script.execute: beepscript
+        
 
   # Consuela Pause
   - platform: nextion
@@ -820,14 +801,14 @@ binary_sensor:
             service: vacuum.pause
             data:
               entity_id: vacuum.rockrobo
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: vacuum.start
             data:
               entity_id: vacuum.rockrobo
-        - script.execute: beepscript
+        
 
   # Consuela Speak
   - platform: nextion
@@ -862,21 +843,18 @@ binary_sensor:
       then:
         - homeassistant.service:
             service: script.1564844497457
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: script.1564844518034
-        - script.execute: beepscript
+        
 
 
 #
 #PAGE 4 - Automations / Settings
 #
 
-####
-# It would be nice to add the plug timer to the screen
-####
   # Kitchen Plug toggle
   - platform: nextion
     page_id: 4
@@ -888,14 +866,14 @@ binary_sensor:
             service: switch.turn_on
             data:
               entity_id: switch.sonoff_1_kitchen
-        - script.execute: beepscript
+        
     on_release:
       then:
         - homeassistant.service:
             service: switch.turn_off
             data:
               entity_id: switch.sonoff_1_kitchen
-        - script.execute: beepscript
+        
 
   # Morning Routine
   - platform: nextion
@@ -907,16 +885,89 @@ binary_sensor:
         - homeassistant.service:
             service: automation.turn_on
             data:
-              entity_id: automation.morning_routine
-        - lambda: 'id(glob_morning_active) = id(morning_on_time).state.c_str();'
-        - script.execute: beepscript
-        - component.update: nextiondisplay
+              entity_id: automation.morning_on_brigi
+        - lambda: |-
+            id(glob_morning_active) = id(morning_on_time).state.c_str();
+            id(nextiondisplay).set_component_text_printf("Automations.ontime","%s",id(glob_morning_active).c_str());
     on_release:
       then:
         - homeassistant.service:
             service: automation.turn_off
             data:
-              entity_id: automation.morning_routine
-        - lambda: 'id(glob_morning_active)= " ";'
-        - script.execute: beepscript
-        - component.update: nextiondisplay
+              entity_id: automation.morning_on_brigi
+        - lambda: |-
+            id(glob_morning_active) = " ";
+            id(nextiondisplay).set_component_text_printf("Automations.ontime","%s",id(glob_morning_active).c_str());
+
+  # Camera - Calibrate
+  - platform: nextion
+    page_id: 5
+    component_id: 9
+    id: cam_cal
+    on_press:
+      then:
+        - homeassistant.service:
+            service: script.1555780448545
+
+  # Camera - Turn OFF
+  - platform: nextion
+    page_id: 5
+    component_id: 11
+    id: cam_off
+    on_press:
+      then:
+        - homeassistant.service:
+            service: script.1555864273339
+
+  # Camera - Turn ON
+  - platform: nextion
+    page_id: 5
+    component_id: 10
+    id: cam_on
+    on_press:
+      then:
+        - homeassistant.service:
+            service: script.1567332436215
+            
+  # Buzzer Switch
+  - platform: nextion
+    page_id: 5
+    component_id: 13
+    id: buzzertoggle
+
+  # Brightness switch
+  - platform: nextion
+    page_id: 5
+    component_id: 12
+    id: brightness
+    on_press:
+      then:
+        - script.execute: autobrightness
+
+script:
+  - id: autobrightness
+    then:
+      - if:
+          condition:
+            binary_sensor.is_on: brightness
+          then:
+            - if:
+                condition:
+                  - sun.is_above_horizon:
+                then:
+                  lambda: 'id(nextiondisplay).send_command_no_ack("dim=80");'    
+                else:
+                  - lambda: 'id(nextiondisplay).send_command_no_ack("dim=5");'
+  - id: motionscript
+    then:
+      - if:
+          condition:
+            - binary_sensor.is_on: statusscreenmotion
+          then:
+            - lambda: 'id(nextiondisplay).send_command_no_ack("sleep=0");'
+            - script.execute: autobrightness
+            
+switch:
+  - platform: restart
+    name: Reboot Nextion3.5
+    id: reboot
