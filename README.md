@@ -5,6 +5,9 @@ Hi there!
 In this project I tried to create a simple(?) wall mount with quick and easy access to Home Assistant.
 The purpose is to have a remote controller, that's mounted on the wall and gives a quick info of the day ... or basically whatever you need from Home Assistant.
 
+## Update:
+This repo is not maintained anymore, as I'm not using the screen. But I leave the code and resources here for anyone who is looking after ideas :)
+
 ![](https://github.com/Andoramb/Nextion-wall-mount/blob/master/Images/preview-small.jpg)
 
 Demo video [HERE](https://www.youtube.com/watch?v=TL8wZNnS4jI)
